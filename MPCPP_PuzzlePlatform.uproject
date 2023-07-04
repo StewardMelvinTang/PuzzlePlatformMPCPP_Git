@@ -7,7 +7,10 @@
 		{
 			"Name": "MPCPP_PuzzlePlatform",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
 		}
 	]
 }
