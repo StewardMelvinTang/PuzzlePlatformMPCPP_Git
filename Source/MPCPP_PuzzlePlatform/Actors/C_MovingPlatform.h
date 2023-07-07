@@ -27,6 +27,9 @@ public:
 
 	bool GetIsStepped(){return isStepped;}
 
+	void AddActiveTrigger();
+	void RemoveActiveTrigger();
+
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -50,13 +53,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void OnPlayerUnoverlap(AActor* overlappedActor);
 
+
+
 private:
-	bool startMove = false;
+	bool canMove = true;
 	FVector GlobalStartLocation;
 	FVector GlobalTargetLocation;
 	bool isStepped = false;
 	float lerpAlpha = 0.f;
 	UPROPERTY()
 	UMaterialInterface* defaultMaterial = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	int activeTriggers = 1;
 
 };

@@ -33,18 +33,8 @@ void AC_MovingPlatform::BeginPlay()
 	}
 	
 	defaultMaterial = platformMesh->GetMaterial(0);
-
-	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]() {
-		if (!HasAuthority()) return;
-		lerpAlpha = 0.f;
-		startMove = true;
-		GlobalTargetLocation = GetTransform().TransformPosition(targetLoc);
-		GlobalStartLocation = GetActorLocation();
-	}, 2.f, false);
-
-	
-	
+	GlobalTargetLocation = GetTransform().TransformPosition(targetLoc);
+	GlobalStartLocation = GetActorLocation();
 }
 
 // Called every frame
@@ -52,22 +42,23 @@ void AC_MovingPlatform::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (startMove && platformMesh) {
-		FVector Location = GetActorLocation();
-		float DistanceLength = (GlobalTargetLocation - GlobalStartLocation).Size();
-		float DistanceTravelled = (Location - GlobalStartLocation).Size();
-		UE_LOG(LogTemp, Display, TEXT("Distance Length : %f, Distance Travelled : %f"), DistanceLength, DistanceTravelled);
+	if (activeTriggers > 0) {
+		if (canMove && platformMesh) {
+			FVector Location = GetActorLocation();
+			float DistanceLength = (GlobalTargetLocation - GlobalStartLocation).Size();
+			float DistanceTravelled = (Location - GlobalStartLocation).Size();
+			UE_LOG(LogTemp, Display, TEXT("Distance Length : %f, Distance Travelled : %f"), DistanceLength, DistanceTravelled);
 
-		if (DistanceTravelled >= DistanceLength) {
-			FVector Swap = GlobalStartLocation;
-			GlobalStartLocation = GlobalTargetLocation;
-			GlobalTargetLocation = Swap;
+			if (DistanceTravelled >= DistanceLength) {
+				FVector Swap = GlobalStartLocation;
+				GlobalStartLocation = GlobalTargetLocation;
+				GlobalTargetLocation = Swap;
+			}
+			FVector Direction = (GlobalTargetLocation - GlobalStartLocation).GetSafeNormal();
+			Location += speed * DeltaTime * Direction;
+			SetActorLocation(Location);
 		}
-		FVector Direction = (GlobalTargetLocation - GlobalStartLocation).GetSafeNormal();
-		Location += speed * DeltaTime * Direction;
-		SetActorLocation(Location);
 	}
-
 }
 
 void AC_MovingPlatform::OnPlayerOverlapped(AActor* overlappedActor) {
@@ -80,8 +71,19 @@ void AC_MovingPlatform::OnPlayerOverlapped(AActor* overlappedActor) {
 void AC_MovingPlatform::OnPlayerUnoverlap(AActor* overlappedActor) {
 	if (Cast<AMPCPP_PuzzlePlatformCharacter>(overlappedActor)) {
 		isStepped = false;
+		TArray<AActor*>overlappingActors;
+		boxCollider->GetOverlappingActors(overlappingActors, AMPCPP_PuzzlePlatformCharacter::StaticClass());
+		if (overlappingActors.Num() > 0) return;
 		platformMesh->SetMaterial(0, defaultMaterial);
 	}
+}
+
+void AC_MovingPlatform::AddActiveTrigger() {
+	activeTriggers++;
+}
+
+void AC_MovingPlatform::RemoveActiveTrigger() {
+	if (activeTriggers > 0) activeTriggers--;
 }
 
 
